@@ -1,0 +1,242 @@
+
+MAX = 100000
+DEPTH=4
+WIDTH=2600
+Count=0
+debug=false
+inmem=true
+--local a,b,c,d,data
+
+printf = function(s,...)
+           return io.write(s:format(...))
+end
+
+if inmem == false then
+  --init box
+  box.cfg{
+    wal_mode = "none",
+  }
+end
+
+local function init_expressions()
+  local expr={}
+  for i=1,WIDTH,1 do
+    local z = {}
+    for j=1,DEPTH,1 do
+      z[j] = tostring(math.random(MAX))
+    end
+    expr[i] = z
+  end
+  return expr
+end
+
+local function init_expressions_test()
+  local expr={}
+  local MAX = 40
+  local count = 1
+  for i=1,10,1 do
+    local z = {}
+    for j=1,4,1 do
+      z[j] = tostring(count)
+      count = count + 1
+    end
+    expr[i] = z
+  end
+  return expr
+end
+
+local function init_inmem_test()
+  local MAX=40
+  local a={}
+  local b={}
+  local c={}
+  local d={}
+  local data={}
+  for i = 1, MAX, 1 do
+    a[i] = 'b'
+    b[i] = 'c'
+    c[i] = 'd'
+    d[i] = tostring(i)
+    data[i] = tostring(MAX-i+1)
+  end
+  return a,b,c,d,data
+end
+
+local function init_inmem()
+  local a={}
+  local b={}
+  local c={}
+  local d={}
+  local data={}
+  for i = 1, MAX, 1 do
+    a[i] = string.char(string.byte('a')+math.random(4)-1)
+    b[i] = string.char(string.byte('a')+math.random(4)-1)
+    c[i] = string.char(string.byte('a')+math.random(4)-1)
+    d[i] = tostring(math.random(MAX))
+    data[i] = tostring(MAX-i+1)
+  end
+  return a,b,c,d,data
+end
+
+--initialize and fill datamodel tables to use for dereferencing expressions
+local function init_db()
+  box.schema.space.create('a')
+  box.schema.space.create('b')
+  box.schema.space.create('c')
+  box.schema.space.create('d')
+  box.schema.space.create('data')
+  box.space.a:create_index('primary')
+  box.space.b:create_index('primary')
+  box.space.c:create_index('primary')
+  box.space.d:create_index('primary')
+  box.space['data'].create_index('primary')
+  for i = 1, MAX, 1 do
+    box.space.a.insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+    box.space.b.insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+    box.space.c.insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+    box.space.d.insert{tostring(i), tostring(math.random(MAX))}
+    box.space['data'].insert{tostring(i), tostring(MAX-i+1)}
+  end
+end
+
+local function get(a,b,c,d,table_name, row)
+  --printf("get(%s, %s)=", table_name, row)
+  local tmp
+  row = tonumber(row)
+  if     table_name == 'a' then tmp=a[row]
+  elseif table_name == 'b' then tmp=b[row]
+  elseif table_name == 'c' then tmp=c[row]
+  elseif table_name == 'd' then tmp=d[row]
+  end
+  --print(tmp)
+  return tmp
+end
+
+local function get_db(table_name, row)
+  --printf("get(%s, %s)=", table_name, row)
+  return box.space[table_name]:select(row)
+end
+
+local function execute(expr,a,b,c,d,data)
+  local results = {}
+  if debug then printf("execute(): expr# = %d\n", #expr) end
+  for i=1,#expr,1 do
+    local e = expr[i]
+    local res = {}
+    local tname = 'a'
+    for s=1,#e,1 do
+     -- printf("e[%d]=%s\n", s, e[s])
+      if tname == 'd' then
+  --      print("tname==d: e[s]="..e[s].." "..data[4])
+    --    printf("data[%s]=", s)
+        --print(data[tonumber(e[s])])
+        local val
+        if inmem then
+          val = tonumber(d[tonumber(e[s])])
+          res[s] = data[val]
+        else
+          val = tonumber(get_db('d', e[s]))
+          res[s] = get_db('data', val)
+        end
+        Count = Count + 2
+        break
+      end 
+      if inmem then
+        tname = get(a,b,c,d, tname, e[s])
+      else
+        tname = get_db(tname, e[s]) 
+      end
+--      print("tname->"..tname)
+      Count = Count + 1
+      res[s] = tname
+    end
+    results[i] = res
+  end
+  if debug then printf("results# = %d\n", #results) end
+  return results
+end
+
+local function main()
+  local t
+  local t0=os.clock()
+  local e 
+
+  if debug then
+    e = init_expressions_test()
+  else
+    e = init_expressions()
+  end
+  
+  print("expressions:")
+   
+  --print
+  if debug then
+    for i = 1, #e, 1 do
+      local z = e[i]
+      print("expr #"..i)
+      for j=1,#z,1 do
+        print(z[j]..', ')
+      end
+    end 
+  end
+  
+  t = os.clock()
+  print("added "..#e.." expressions in "..1000*(t - t0).." ms.\nfilling data model. please wait.")
+
+  t0 = os.clock()
+  local a,b,c,d,data
+  if inmem then
+    if debug then
+      a,b,c,d,data = init_inmem_test()
+    else
+      a,b,c,d,data = init_inmem()
+    end
+    t = os.clock()
+    print("added "..(#a+#b+#c+#d+#data).." records in datamodel in "..1000*(t - t0).." ms")
+    if debug then
+      ptint("data model: ")
+      for i = 1, #a, 1 do
+        print(a[i]..', '..b[i]..', '..c[i]..', '..d[i], data[i])
+      end
+      print("end of data model")
+    end
+  else
+    init_db()
+    t = os.clock()
+    print("filled datamodel in "..1000*(t - t0).." ms")
+    --todo
+  end
+
+  local res = {}
+  local REPEATS = 10
+  if debug then REPEATS = 1 end
+
+  print("processing test. please wait.")
+
+  t0 = os.clock()
+  for z=1,REPEATS,1 do
+    if inmem then
+      res[z] = execute(e,a,b,c,d,data)
+    else
+      res[z] = execute(e,nil,nil,nil,nil,nil)
+    end
+  end
+  t = os.clock()
+  
+  if (debug) then
+    print("repeats #="..#res)
+    for i = 1,#res,1 do
+      for j = 1,#res[i],1 do
+        r = res[i][j]
+        for k = 1,#r,1 do
+          printf("%s, ", r[k])
+        end
+        printf("\n")
+      end
+    end
+  end
+  print("executed in "..1000.0*(t-t0).." ms; total dereferences: "..Count)
+  print("executed in "..1000.0*(t-t0).." ms; single dereference time, ns: "..((t-t0)*1000000)/Count)
+end
+
+main()
