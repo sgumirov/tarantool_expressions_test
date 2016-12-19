@@ -26,6 +26,8 @@ for i=1,shards_num,1 do
   cfg.servers[i]={ uri = 'localhost:'..tostring(33330+i-1), zone = tostring(i-1) }
 end
 
+box.schema.user.create(cfg.login, { password = cfg.password })
+box.schema.user.grant(cfg.login, 'read,write,execute', 'universe')
 
 box.cfg{
   log_level = 5;
