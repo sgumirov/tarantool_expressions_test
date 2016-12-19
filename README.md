@@ -1,0 +1,1 @@
+Benchmark for evaluating expressions in a metadata model under Tarantool.
