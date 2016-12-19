@@ -37,6 +37,8 @@ box.cfg{
 box.schema.user.create(cfg.login, { password = cfg.password })
 box.schema.user.grant(cfg.login, 'read,write,execute', 'universe')
 
+init_db()
+
 shard.check_shard = function(con)
   return con.space.data ~= nil
 end

@@ -1,21 +1,12 @@
+shard = require('shard')
 
-MAX = 100000
+MAX = 1000
 DEPTH=4
 WIDTH=2600
 Count=0
 debug=false
-inmem=true
-shard=false
-
-local b = require('box')
-local s = require('shard') 
-if b ~= nil then 
-  print("= we are inside tarantool =")
-  inmem = false
-  if s ~= nil then
-    print("enabling sharding")
-  end 
-end
+inmem=false
+sharding=true
 
 --local a,b,c,d,data
 
@@ -23,11 +14,52 @@ printf = function(s,...)
            return io.write(s:format(...))
 end
 
+--initialize and fill datamodel tables to use for dereferencing expressions
+--this function is used from shard_main.lua, so should be on top
+function init_db()
+  local a,b,c,d,data
+  a=box.schema.space.create('a')
+  b=box.schema.space.create('b')
+  c=box.schema.space.create('c')
+  d=box.schema.space.create('d')
+  data=box.schema.space.create('data')
+  a:create_index('primary', {parts={1, 'STR'}})
+  b:create_index('primary', {parts={1, 'STR'}})
+  c:create_index('primary', {parts={1, 'STR'}})
+  d:create_index('primary', {parts={1, 'STR'}})
+  data:create_index('primary', {parts={1, 'STR'}})
+  if sharding == false then
+    for i = 1, MAX, 1 do
+      box.space.a:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+      box.space.b:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+      box.space.c:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+      box.space.d:insert{tostring(i), tostring(math.random(MAX))}
+      box.space['data']:insert{tostring(i), tostring(MAX-i+1)}
+    end
+  else
+    --when sharding, will do it later
+  end
+end
+
 if inmem == false then
-  --init box
-  box.cfg{
-    wal_mode = "none",
-  }
+  local b = require('box') 
+  if b ~= nil then 
+    print("= we are inside tarantool =")
+    inmem = false
+    if shard ~= nil then
+      --box is inited inside shard
+      print("enabling sharding")
+      require('shard-main')
+      print("ENABLED")
+    else
+      sharding = false
+      --init box
+      box.cfg{
+        wal_mode = "none",
+      }
+    end 
+  end
+
 end
 
 local function init_expressions()
@@ -90,28 +122,6 @@ local function init_inmem()
   return a,b,c,d,data
 end
 
---initialize and fill datamodel tables to use for dereferencing expressions
-local function init_db()
-  local a,b,c,d,data
-  a=box.schema.space.create('a')
-  b=box.schema.space.create('b')
-  c=box.schema.space.create('c')
-  d=box.schema.space.create('d')
-  data=box.schema.space.create('data')
-  a:create_index('primary', {parts={1, 'STR'}})
-  b:create_index('primary', {parts={1, 'STR'}})
-  c:create_index('primary', {parts={1, 'STR'}})
-  d:create_index('primary', {parts={1, 'STR'}})
-  data:create_index('primary', {parts={1, 'STR'}})
-  for i = 1, MAX, 1 do
-    box.space.a:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-    box.space.b:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-    box.space.c:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-    box.space.d:insert{tostring(i), tostring(math.random(MAX))}
-    box.space['data']:insert{tostring(i), tostring(MAX-i+1)}
-  end
-end
-
 local function get(a,b,c,d,table_name, row)
   --printf("get(%s, %s)=", table_name, row)
   local tmp
@@ -126,13 +136,25 @@ local function get(a,b,c,d,table_name, row)
 end
 
 local function get_db(table_name, row)
---  printf("get_db(%s; %s)\n", table_name, row)
+  --printf("get_db(%s; %s)\n", table_name, row)
   --print(box.space.a:len())
-  local tmp = box.space[table_name]:select(tostring(row))
---  for i=1,#tmp,1 do
---    print(tmp[i])
---  end
-  return tmp[1][2]
+  local tmp
+  if sharding == false then
+    tmp = box.space[table_name]:select(tostring(row))
+  else
+    tmp = shard[table_name]:select(tostring(row))
+  end
+  --[[print("#tmp="..#tmp)
+  for i=1,#tmp,1 do
+    print(tmp[i])
+    print("#tmp[i]="..#(tmp[i]))
+    local z = tmp[i]
+    for j=1,#z,1 do
+      print(z[j])
+    end
+  end
+  print("res?="..tmp[1][1][2])]]--
+  return tmp[1][1][2]
 end
 
 local function execute(expr,a,b,c,d,data)
@@ -219,10 +241,21 @@ local function main()
       print("end of data model")
     end
   else
-    init_db()
-    t = os.clock()
-    print("filled datamodel in "..1000*(t - t0).." ms")
-    --todo
+    if sharding == false then
+      init_db()
+      t = os.clock()
+      print("filled datamodel in "..1000*(t - t0).." ms")
+    else
+      --print("shard is enabled, db was already initialized (on shard init using init_db callback)")
+      print("shard="..tostring(shard))
+      for i = 1, MAX, 1 do
+        shard['a']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+        shard['b']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+        shard['c']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+        shard['d']:insert{tostring(i), tostring(math.random(MAX))}
+        shard['data']:insert{tostring(i), tostring(MAX-i+1)}
+      end
+    end
   end
 
   local res = {}

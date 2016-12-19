@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>lua_multitest</name>
+	<name>tnt_expressions</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.eclipse.ldt.nature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>src/shard-main.lua</name>
+			<type>1</type>
+			<location>/home/phoenix/projects/lua/tnt_expressions/src/shard-main.lua</location>
+		</link>
+	</linkedResources>
 </projectDescription>
