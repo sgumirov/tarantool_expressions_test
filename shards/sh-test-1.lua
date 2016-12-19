@@ -3,9 +3,10 @@ box = require('box')
 
 --shard params: 
 -- CONFIG THIS!
-binport = 33330
-shards_num = 2
-
+if binport == nil then
+  binport = 33331
+  shards_num = 3
+end
 --
 
 cfg = {
@@ -26,15 +27,15 @@ for i=1,shards_num,1 do
   cfg.servers[i]={ uri = 'localhost:'..tostring(33330+i-1), zone = tostring(i-1) }
 end
 
-box.schema.user.create(cfg.login, { password = cfg.password })
-box.schema.user.grant(cfg.login, 'read,write,execute', 'universe')
-
 box.cfg{
   log_level = 5;
   listen = cfg.binary;
   slab_alloc_arena = 0.1;
   wal_mode = 'none';
 }
+
+box.schema.user.create(cfg.login, { password = cfg.password })
+box.schema.user.grant(cfg.login, 'read,write,execute', 'universe')
 
 shard.check_shard = function(con)
   return con.space.data ~= nil

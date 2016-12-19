@@ -5,6 +5,18 @@ WIDTH=2600
 Count=0
 debug=false
 inmem=true
+shard=false
+
+local b = require('box')
+local s = require('shard') 
+if b ~= nil then 
+  print("= we are inside tarantool =")
+  inmem = false
+  if s ~= nil then
+    print("enabling sharding")
+  end 
+end
+
 --local a,b,c,d,data
 
 printf = function(s,...)
@@ -80,22 +92,23 @@ end
 
 --initialize and fill datamodel tables to use for dereferencing expressions
 local function init_db()
-  box.schema.space.create('a')
-  box.schema.space.create('b')
-  box.schema.space.create('c')
-  box.schema.space.create('d')
-  box.schema.space.create('data')
-  box.space.a:create_index('primary')
-  box.space.b:create_index('primary')
-  box.space.c:create_index('primary')
-  box.space.d:create_index('primary')
-  box.space['data'].create_index('primary')
+  local a,b,c,d,data
+  a=box.schema.space.create('a')
+  b=box.schema.space.create('b')
+  c=box.schema.space.create('c')
+  d=box.schema.space.create('d')
+  data=box.schema.space.create('data')
+  a:create_index('primary', {parts={1, 'STR'}})
+  b:create_index('primary', {parts={1, 'STR'}})
+  c:create_index('primary', {parts={1, 'STR'}})
+  d:create_index('primary', {parts={1, 'STR'}})
+  data:create_index('primary', {parts={1, 'STR'}})
   for i = 1, MAX, 1 do
-    box.space.a.insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-    box.space.b.insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-    box.space.c.insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-    box.space.d.insert{tostring(i), tostring(math.random(MAX))}
-    box.space['data'].insert{tostring(i), tostring(MAX-i+1)}
+    box.space.a:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+    box.space.b:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+    box.space.c:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+    box.space.d:insert{tostring(i), tostring(math.random(MAX))}
+    box.space['data']:insert{tostring(i), tostring(MAX-i+1)}
   end
 end
 
@@ -113,8 +126,13 @@ local function get(a,b,c,d,table_name, row)
 end
 
 local function get_db(table_name, row)
-  --printf("get(%s, %s)=", table_name, row)
-  return box.space[table_name]:select(row)
+--  printf("get_db(%s; %s)\n", table_name, row)
+  --print(box.space.a:len())
+  local tmp = box.space[table_name]:select(tostring(row))
+--  for i=1,#tmp,1 do
+--    print(tmp[i])
+--  end
+  return tmp[1][2]
 end
 
 local function execute(expr,a,b,c,d,data)
@@ -146,7 +164,7 @@ local function execute(expr,a,b,c,d,data)
       else
         tname = get_db(tname, e[s]) 
       end
---      print("tname->"..tname)
+      --print("tname->"..tname)
       Count = Count + 1
       res[s] = tname
     end
@@ -237,6 +255,9 @@ local function main()
   end
   print("executed in "..1000.0*(t-t0).." ms; total dereferences: "..Count)
   print("executed in "..1000.0*(t-t0).." ms; single dereference time, ns: "..((t-t0)*1000000)/Count)
+  if inmem == false then 
+    os.exit()
+  end
 end
 
 main()

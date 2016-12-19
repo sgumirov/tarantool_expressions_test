@@ -3,9 +3,10 @@ box = require('box')
 
 --shard params: 
 -- CONFIG THIS!
-binport = 33131
-shards_num = 3
-
+if binport == nil then
+  binport = 33330
+  shards_num = 3
+end
 --
 
 cfg = {
@@ -26,7 +27,6 @@ for i=1,shards_num,1 do
   cfg.servers[i]={ uri = 'localhost:'..tostring(33330+i-1), zone = tostring(i-1) }
 end
 
-
 box.cfg{
   log_level = 5;
   listen = cfg.binary;
@@ -34,10 +34,14 @@ box.cfg{
   wal_mode = 'none';
 }
 
+box.schema.user.create(cfg.login, { password = cfg.password })
+box.schema.user.grant(cfg.login, 'read,write,execute', 'universe')
+
 shard.check_shard = function(con)
   return con.space.data ~= nil
 end
+print("port="..cfg.binary)
 shard.init(cfg)
 shard.wait_connection()
 
-print("Sharding is UP. Filling up DB...")
+print("Sharding is UP")
