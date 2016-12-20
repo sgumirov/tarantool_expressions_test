@@ -7,6 +7,7 @@ inmem=false
 sharding=true
 batch=true
 wide=true
+calc_collis=true
 
 if (inmem == false) then
   print("NO TARANTOOL")
@@ -173,11 +174,26 @@ local function execute_wide(expr, a,b,c,d,data)
   local layer_num = 1
   local lnum = #(expr[1])
   local params = {}
+  local total_collis = 0
   for n = 1,lnum,1 do --n = layer num
+    local collisions = {}
     for i = 1,#expr,1 do --i = expr num
       if results[i] == nil then results[i] = {'a'} end
-      layer[i] = expr[i][n]
-      params[i] = {layer, results, i, n} 
+      local k = expr[i][n]
+      layer[i] = k
+      if calc_collis == true then
+        if collisions[k] == nil then 
+          collisions[k] = 1
+        else 
+          collisions[k] =  1 + collisions[k]
+        end
+      end
+      params[i] = {layer, results, i, n}
+    end
+    if calc_collis == true then
+      for k,v in ipairs(collisions) do
+        if v > 1 then total_collis = total_collis + v end
+      end
     end
     local f = function (param)
       local layer, results, expr_i, layer_n
@@ -216,6 +232,7 @@ local function execute_wide(expr, a,b,c,d,data)
   end
   
   if debug then printf("results# = %d\n", #results) end
+  if calc_collis == true then print("COLLISIONS# = "..total_collis) end
   return results
 end
 
