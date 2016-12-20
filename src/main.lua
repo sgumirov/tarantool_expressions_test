@@ -6,9 +6,10 @@ DEPTH=4
 WIDTH=2600
 Count=0
 debug=false
-inmem=false
+inmem=true
 sharding=true
 batch=true
+wide=true
 
 fibers_count = 0
 
@@ -330,9 +331,17 @@ local function main()
   t0 = os.clock()
   for z=1,REPEATS,1 do
     if inmem then
-      res[z] = execute(e,a,b,c,d,data)
+      if wide == false then
+        res[z] = execute(e,a,b,c,d,data)
+      else 
+        res[z] = execute_wide(e,a,b,c,d,data)
+      end
     else
-      res[z] = execute(e,nil,nil,nil,nil,nil)
+      if wide == false then
+        res[z] = execute(e,nil,nil,nil,nil,nil)
+      else
+        res[z] = execute_wide(e,nil,nil,nil,nil,nil)
+      end
     end
   end
   t = os.clock()
