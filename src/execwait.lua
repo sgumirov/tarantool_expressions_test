@@ -14,11 +14,12 @@ function execute_and_wait(num, run_func)
   end
   while gvar > 0 do
     condvar:wait(1)
-    print("MAIN woken up gvar="..gvar)
+    --print("MAIN woken up gvar="..gvar)
   end
-  print("MAIN all finished SUCCESS")
+  --print("MAIN all finished SUCCESS")
 end
 
+--example of usage:
 local function main()
   execute_and_wait(10000, function() fiber.sleep(math.random(10)) end)
 end

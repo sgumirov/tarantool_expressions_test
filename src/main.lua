@@ -205,7 +205,7 @@ local function main()
   local e 
   
   local ew = require('execwait')
-  ew.execute_and_wait(1000, function() fiber.sleep(math.random(10)) end)
+  ew.execute_and_wait(1000, function() fiber.sleep(math.random(4)) end)
 
   if debug then
     e = init_expressions_test()
