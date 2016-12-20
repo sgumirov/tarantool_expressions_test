@@ -248,13 +248,17 @@ local function main()
     else
       --print("shard is enabled, db was already initialized (on shard init using init_db callback)")
       print("shard="..tostring(shard))
+      local shrd = shard
+      --queueing? operates in batch
+      if (batch == true) then shrd = shard.q_begin() end
       for i = 1, MAX, 1 do
-        shard['a']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-        shard['b']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-        shard['c']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-        shard['d']:insert{tostring(i), tostring(math.random(MAX))}
-        shard['data']:insert{tostring(i), tostring(MAX-i+1)}
+        shrd['a']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+        shrd['b']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+        shrd['c']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+        shrd['d']:insert{tostring(i), tostring(math.random(MAX))}
+        shrd['data']:insert{tostring(i), tostring(MAX-i+1)}
       end
+      if (batch == true) then shrd:q_end() end
     end
   end
 
