@@ -168,12 +168,19 @@ local function execute_wide(expr, a,b,c,d,data)
   local results = {}
   local layer_num = 1
   local lnum = #(expr[1])
+  local params = {}
   for n = 1,lnum,1 do  --n = layer num
     for i = 1,#expr,1 do --i = expr num
       if results[i] == nil then results[i] = {'a'} end
       layer[i] = expr[i][n]
+      params[i] = {layer, results, i, n} 
     end
-    local f = function (layer, results, expr_i, layer_n)
+    local f = function (param)
+      local layer, results, expr_i, layer_n
+      layer = param[1]
+      results = param[2]
+      expr_i = param[3]
+      layer_n = param[4]
       local tname = results[expr_i][layer_n]
       if tname == 'd' then
         local val
@@ -194,7 +201,7 @@ local function execute_wide(expr, a,b,c,d,data)
       end
       Count = Count + 1
     end
-    execute_and_wait(layer, f)
+    execute_and_wait(params, f)
   end
   
   if debug then printf("results# = %d\n", #results) end
