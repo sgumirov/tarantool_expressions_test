@@ -7,7 +7,7 @@ inmem=false
 sharding=true
 batch=true
 wide=true
-calc_collis=true
+cache_enable=true
 
 math.randomseed(os.time())
 
@@ -183,16 +183,17 @@ local function execute_wide(expr, a,b,c,d,data)
       if results[i] == nil then results[i] = {'a'} end
       local k = expr[i][n]
       layer[i] = k
-      if calc_collis == true then
-        collisions[k] = (collisions[k] == nil) and 1 or (1+collisions[k])
+      if cache_enable == true then
+        if collisions[k] == nil then collisions[k] = {} end
+        collisions[k] = table.insert(collisions[k], {i})  
       end
       params[i] = {layer, results, i, n}
     end
-    if calc_collis == true then
+--[[    if cache_enable == true then
       for k,v in pairs(collisions) do
         if v > 1 then total_collis = total_collis + v end
       end
-    end
+    end]]--
     local f = function (param)
       local layer, results, expr_i, layer_n
       layer = param[1]
@@ -230,7 +231,7 @@ local function execute_wide(expr, a,b,c,d,data)
   end
   
   if debug then printf("results# = %d\n", #results) end
-  if calc_collis == true then print("COLLISIONS# = "..total_collis) end
+  --if cache_enable == true then print("COLLISIONS# = "..total_collis) end
   return results
 end
 
