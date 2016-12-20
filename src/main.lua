@@ -183,9 +183,14 @@ local function execute_wide(expr, a,b,c,d,data)
       results = param[2]
       expr_i = param[3]
       layer_n = param[4]
-      local tname = results[expr_i][layer_n]
+      local tname = nil
+      if (results[expr_i] ~= nil) then
+        tname = results[expr_i][layer_n]
+      else 
+        return
+      end 
       --final result means a number in the results, finish then
-      if string.find("abcdata", tname) == nil then return end
+      if (tname == nil) or (string.find("abcdata", tname) == nil) then return end
       if tname == 'd' then
         local val
         if inmem then
