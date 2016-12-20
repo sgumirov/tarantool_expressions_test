@@ -1,6 +1,3 @@
-shard = require('shard')
-require('execwait')
-
 MAX = 1000
 DEPTH=4
 WIDTH=2600
@@ -9,7 +6,20 @@ debug=false
 inmem=false
 sharding=false
 batch=true
-wide=true
+wide=false
+
+if (sharding == true) then
+  shard = require('shard')
+end
+
+if (wide==true) then
+  require('execwait')
+  print("FIBERS")
+else
+  print("NO FIBERS")
+end
+
+
 
 fibers_count = 0
 
@@ -47,16 +57,16 @@ function init_db()
 end
 
 if inmem == false then
-  local b = require('box') 
+  local b = require('box')
   if b ~= nil then 
-    print("= we are inside tarantool =")
-    inmem = false
+    print("RUNNING INSIDE TARANTOOL")
     if shard ~= nil then
       --box is inited inside shard
-      print("enabling sharding")
+      print("enabling sharding init..")
       require('shard-main')
       print("ENABLED")
     else
+      print("NO SHARDING")
       sharding = false
       --init box
       box.cfg{
@@ -64,7 +74,6 @@ if inmem == false then
       }
     end 
   end
-
 end
 
 local function init_expressions()
@@ -159,7 +168,12 @@ local function get_db(table_name, row)
     end
   end
   print("res?="..tmp[1][1][2])]]--
-  return tmp[1][1][2]
+  
+  if sharding == true then
+    return tmp[1][1][2]
+  else 
+    return tmp[1][2]
+  end
 end
 
 local layer = {}
