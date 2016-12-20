@@ -193,35 +193,9 @@ local function execute_wide(expr, a,b,c,d,data)
       end
       Count = Count + 1
     end
+    execute_and_wait(layer, f)
   end
   
-  for i=1,#expr,1 do
-    local e = expr[i]
-    local res = {}
-    local tname = 'a'
-    for s=1,#e,1 do
-      if tname == 'd' then
-        local val
-        if inmem then
-          val = tonumber(d[tonumber(e[s])])
-          res[s] = data[val]
-        else
-          val = tonumber(get_db('d', e[s]))
-          res[s] = get_db('data', val)
-        end
-        Count = Count + 2
-        break
-      end 
-      if inmem then
-        tname = get(a,b,c,d, tname, e[s])
-      else
-        tname = get_db(tname, e[s]) 
-      end
-      Count = Count + 1
-      res[s] = tname
-    end
-    results[i] = res
-  end
   if debug then printf("results# = %d\n", #results) end
   return results
 end
