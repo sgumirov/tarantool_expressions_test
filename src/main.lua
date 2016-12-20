@@ -4,12 +4,17 @@ WIDTH=2600
 Count=0
 debug=false
 inmem=false
-sharding=false
+sharding=true
 batch=true
-wide=false
+wide=true
+
+if (inmem == false) then
+  print("NO TARANTOOL")
+end
 
 if (sharding == true) then
   shard = require('shard')
+  print("BATCH = "..tostring(batch))
 end
 
 if (wide==true) then
@@ -19,11 +24,7 @@ else
   print("NO FIBERS")
 end
 
-
-
 fibers_count = 0
-
---local a,b,c,d,data
 
 printf = function(s,...)
            return io.write(s:format(...))
@@ -150,7 +151,7 @@ local function get(a,b,c,d,table_name, row)
 end
 
 local function get_db(table_name, row)
-  --printf("get_db(%s; %s)\n", table_name, row)
+  printf("get_db(%s; %s)\n", table_name, row)
   --print(box.space.a:len())
   local tmp
   if sharding == false then
@@ -170,6 +171,7 @@ local function get_db(table_name, row)
   print("res?="..tmp[1][1][2])]]--
   
   if sharding == true then
+--    print(table_name.."["..tostring(row).."]".." -> "..tmp[1][1][2])
     return tmp[1][1][2]
   else 
     return tmp[1][2]

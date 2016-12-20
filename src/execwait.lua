@@ -14,9 +14,9 @@ function execute_and_wait(list, run_func)
   end
   while gvar > 0 do
     condvar:wait(1)
-    print("MAIN woken up gvar="..gvar)
+--    print("MAIN woken up gvar="..gvar)
   end
-  print("MAIN all finished SUCCESS")
+--  print("MAIN all finished SUCCESS")
 end
 
 local function main()
