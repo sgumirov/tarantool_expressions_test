@@ -7,6 +7,9 @@ Count=0
 debug=false
 inmem=false
 sharding=true
+batch=true
+
+fibers_count = 0
 
 --local a,b,c,d,data
 
@@ -200,6 +203,9 @@ local function main()
   local t
   local t0=os.clock()
   local e 
+  
+  local ew = require('execwait')
+  ew.execute_and_wait(1000, function() fiber.sleep(math.random(10)) end)
 
   if debug then
     e = init_expressions_test()
@@ -244,21 +250,35 @@ local function main()
     if sharding == false then
       init_db()
       t = os.clock()
-      print("filled datamodel in "..1000*(t - t0).." ms")
+      print("filled datamodel in "..1000*(t - t0).." ms (no shard, no batch)")
     else
       --print("shard is enabled, db was already initialized (on shard init using init_db callback)")
-      print("shard="..tostring(shard))
       local shrd = shard
       --queueing? operates in batch
       if (batch == true) then shrd = shard.q_begin() end
+      local cnt=0
       for i = 1, MAX, 1 do
-        shrd['a']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-        shrd['b']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-        shrd['c']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
-        shrd['d']:insert{tostring(i), tostring(math.random(MAX))}
-        shrd['data']:insert{tostring(i), tostring(MAX-i+1)}
+        if (batch == true) then
+          shrd['a']:q_insert(cnt,{tostring(i), string.char(string.byte('a')+math.random(4)-1)})
+          cnt=cnt+1
+          shrd['b']:q_insert(cnt,{tostring(i), string.char(string.byte('a')+math.random(4)-1)})
+          cnt=cnt+1
+          shrd['c']:q_insert(cnt,{tostring(i), string.char(string.byte('a')+math.random(4)-1)})
+          cnt=cnt+1
+          shrd['d']:q_insert(cnt,{tostring(i), tostring(math.random(MAX))})
+          cnt=cnt+1
+          shrd['data']:q_insert(cnt,{tostring(i), tostring(MAX-i+1)})
+          cnt=cnt+1
+        else
+          shrd['a']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+          shrd['b']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+          shrd['c']:insert{tostring(i), string.char(string.byte('a')+math.random(4)-1)}
+          shrd['d']:insert{tostring(i), tostring(math.random(MAX))}
+          shrd['data']:insert{tostring(i), tostring(MAX-i+1)}
+        end
       end
       if (batch == true) then shrd:q_end() end
+      print("filled datamodel in "..1000*(os.clock()-t0).." ms (shard=true, batch="..tostring(batch)..")")
     end
   end
 
