@@ -9,6 +9,8 @@ batch=true
 wide=true
 calc_collis=true
 
+math.randomseed(os.time())
+
 if (inmem == false) then
   print("NO TARANTOOL")
 end
