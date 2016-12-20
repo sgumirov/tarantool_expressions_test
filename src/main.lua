@@ -7,7 +7,7 @@ WIDTH=2600
 Count=0
 debug=false
 inmem=true
-sharding=true
+sharding=false
 batch=true
 wide=true
 
@@ -245,8 +245,6 @@ local function main()
   local t0=os.clock()
   local e 
   
---  execute_and_wait(1000, function() fiber.sleep(math.random(4)) end)
-
   if debug then
     e = init_expressions_test()
   else
