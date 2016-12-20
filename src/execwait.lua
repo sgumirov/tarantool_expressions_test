@@ -24,4 +24,4 @@ local function main()
   execute_and_wait(10000, function() fiber.sleep(math.random(10)) end)
 end
 
-main()
+--main()
