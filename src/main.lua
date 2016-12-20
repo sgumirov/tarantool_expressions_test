@@ -1,4 +1,5 @@
 shard = require('shard')
+require('execwait')
 
 MAX = 1000
 DEPTH=4
@@ -160,6 +161,71 @@ local function get_db(table_name, row)
   return tmp[1][1][2]
 end
 
+local layer = {}
+
+local function execute_wide(expr, a,b,c,d,data)
+  local results = {}
+  local layer_num = 1
+  local lnum = #(expr[1])
+  for n = 1,lnum,1 do  --n = layer num
+    for i = 1,#expr,1 do --i = expr num
+      if results[i] == nil then results[i] = {'a'} end
+      layer[i] = expr[i][n]
+    end
+    local f = function (layer, results, expr_i, layer_n)
+      local tname = results[expr_i][layer_n]
+      if tname == 'd' then
+        local val
+        if inmem then
+          val = tonumber(d[tonumber(layer[expr_i])])
+          results[expr_i][layer_n+1] = data[val]
+        else
+          val = tonumber(get_db('d', layer[expr_i]))
+          results[expr_i][layer_n+1] = get_db('data', val)
+        end
+        Count = Count + 2
+        return
+      end
+      if inmem == false then
+        results[expr_i][layer_n+1] = get_db(tname, layer[expr_i])
+      else
+        results[expr_i][layer_n+1] = get(a,b,c,d, tname, layer[expr_i])
+      end
+      Count = Count + 1
+    end
+  end
+  
+  for i=1,#expr,1 do
+    local e = expr[i]
+    local res = {}
+    local tname = 'a'
+    for s=1,#e,1 do
+      if tname == 'd' then
+        local val
+        if inmem then
+          val = tonumber(d[tonumber(e[s])])
+          res[s] = data[val]
+        else
+          val = tonumber(get_db('d', e[s]))
+          res[s] = get_db('data', val)
+        end
+        Count = Count + 2
+        break
+      end 
+      if inmem then
+        tname = get(a,b,c,d, tname, e[s])
+      else
+        tname = get_db(tname, e[s]) 
+      end
+      Count = Count + 1
+      res[s] = tname
+    end
+    results[i] = res
+  end
+  if debug then printf("results# = %d\n", #results) end
+  return results
+end
+
 local function execute(expr,a,b,c,d,data)
   local results = {}
   if debug then printf("execute(): expr# = %d\n", #expr) end
@@ -204,8 +270,7 @@ local function main()
   local t0=os.clock()
   local e 
   
-  local ew = require('execwait')
-  execute_and_wait(1000, function() fiber.sleep(math.random(4)) end)
+--  execute_and_wait(1000, function() fiber.sleep(math.random(4)) end)
 
   if debug then
     e = init_expressions_test()
