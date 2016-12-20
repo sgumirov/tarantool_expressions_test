@@ -1,4 +1,4 @@
-MAX = 1000
+MAX = 100
 DEPTH=4
 WIDTH=2600
 Count=0
@@ -182,17 +182,18 @@ local function execute_wide(expr, a,b,c,d,data)
       local k = expr[i][n]
       layer[i] = k
       if calc_collis == true then
-        print(k)
+        --print(k)
         if collisions[k] == nil then 
           collisions[k] = 1
         else 
           collisions[k] = 1 + collisions[k]
+          printf("+")
         end
       end
       params[i] = {layer, results, i, n}
     end
     if calc_collis == true then
-      for k,v in ipairs(collisions) do
+      for k,v in pairs(collisions) do
         if v > 1 then total_collis = total_collis + v end
       end
     end
