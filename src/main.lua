@@ -151,24 +151,12 @@ end
 
 local function get_db(table_name, row)
   --printf("get_db(%s; %s)\n", table_name, row)
-  --print(box.space.a:len())
   local tmp
   if sharding == false then
     tmp = box.space[table_name]:select(tostring(row))
   else
     tmp = shard[table_name]:select(tostring(row))
   end
-  --[[print("#tmp="..#tmp)
-  for i=1,#tmp,1 do
-    print(tmp[i])
-    print("#tmp[i]="..#(tmp[i]))
-    local z = tmp[i]
-    for j=1,#z,1 do
-      print(z[j])
-    end
-  end
-  print("res?="..tmp[1][1][2])]]--
-  
   if sharding == true then
     return tmp[1][1][2]
   else 
@@ -183,7 +171,7 @@ local function execute_wide(expr, a,b,c,d,data)
   local layer_num = 1
   local lnum = #(expr[1])
   local params = {}
-  for n = 1,lnum,1 do  --n = layer num
+  for n = 1,lnum,1 do --n = layer num
     for i = 1,#expr,1 do --i = expr num
       if results[i] == nil then results[i] = {'a'} end
       layer[i] = expr[i][n]
@@ -196,6 +184,8 @@ local function execute_wide(expr, a,b,c,d,data)
       expr_i = param[3]
       layer_n = param[4]
       local tname = results[expr_i][layer_n]
+      --final result means a number in the results, finish then
+      if string.find("abcdata", tname) == nil then return end
       if tname == 'd' then
         local val
         if inmem then
