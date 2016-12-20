@@ -182,7 +182,7 @@ local function execute_wide(expr, a,b,c,d,data)
       local k = expr[i][n]
       layer[i] = k
       if calc_collis == true then
-        collisions[k] = (collisions[k] == nil ? 1 : 1+collisions[k])
+        collisions[k] = (collisions[k] == nil) and 1 or (1+collisions[k])
       end
       params[i] = {layer, results, i, n}
     end
