@@ -7,13 +7,20 @@ inmem=true
 sharding=false
 batch=false
 wide=false
-deep=false --means run fiber for each expression simultaneously
+deep=true --means run fiber for each expression simultaneously
 
 math.randomseed(os.time())
 
 if (inmem == false) then
   print("NO TARANTOOL")
   wide = false
+end
+
+if (deep == true) then --check for fibers
+  if(require('fiber') == nil) then
+    print("FATAL ERROR : `deep` option enabled with no LUA support for FIBER. Exiting.")
+    os.exit(-1)
+  end
 end
 
 if (sharding == true) then
