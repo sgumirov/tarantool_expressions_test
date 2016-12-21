@@ -3,19 +3,13 @@ DEPTH=4
 WIDTH=2600
 Count=0
 debug=false
-inmem=true
-sharding=false
-batch=false
+inmem=false
+sharding=true
+batch=true
 wide=false
 deep=true --means run fiber for each expression simultaneously
 
 math.randomseed(os.time())
-
-if (inmem == false) then
-  print("NO TARANTOOL")
-  wide = false
-  os.exit(-1)
-end
 
 if (deep == true) then --check for fibers
   if(require('fiber') == nil) then
@@ -271,7 +265,6 @@ local function execute(expr,a,b,c,d,data)
   local results = {}
   if debug then printf("execute(): expr# = %d\n", #expr) end
   local fiber = nil
-  printf("deep=%s\n", tostring(deep))
   if deep == true then 
     fiber = require('fiber') 
     exprCount = #expr
