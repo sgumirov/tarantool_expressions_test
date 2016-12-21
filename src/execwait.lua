@@ -3,22 +3,21 @@ gvar = 0
 
 function execute_and_wait(list, run_func)
   local condvar = fiber.cond()
-  gvar = #list
-  for i=1,#list,1 do
+  gvar = table.getn(list)
+  for k,v in pairs(list) do
     fiber.create(function (condvar, work_func, arg)
         work_func(arg)
         gvar = gvar - 1
         condvar:signal()
-      end, condvar, run_func, list[i]
+      end, condvar, run_func, v
     )
   end
   while gvar > 0 do
     condvar:wait(1)
---    print("MAIN woken up gvar="..gvar)
   end
---  print("MAIN all finished SUCCESS")
 end
 
+--example of usage
 local function main()
   local list = {}
   for i=1,10,1 do
@@ -29,5 +28,3 @@ local function main()
     fiber.sleep(math.random(10)) 
   end)
 end
-
---main()

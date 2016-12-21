@@ -3,11 +3,11 @@ DEPTH=4
 WIDTH=2600
 Count=0
 debug=false
-inmem=false
-sharding=true
-batch=true
-wide=true
-deep=false
+inmem=true
+sharding=false
+batch=false
+wide=false
+deep=false --means run fiber for each expression simultaneously
 
 math.randomseed(os.time())
 
@@ -230,35 +230,54 @@ local function execute_wide(expr, a,b,c,d,data)
   return results
 end
 
+local function execExpr(i, e, results, a,b,c,d,data)
+  local res = {}
+  local tname = 'a'
+  for s=1,#e,1 do
+    if tname == 'd' then
+      local val
+      if inmem then
+        val = tonumber(d[tonumber(e[s])])
+        res[s] = data[val]
+      else
+        val = tonumber(get_db('d', e[s]))
+        res[s] = get_db('data', val)
+      end
+      Count = Count + 2
+      break
+    end 
+    if inmem then
+      tname = get(a,b,c,d, tname, e[s])
+    else
+      tname = get_db(tname, e[s]) 
+    end
+    Count = Count + 1
+    res[s] = tname
+  end
+  results[i] = res
+end
+
+exprCount = 0
+
 local function execute(expr,a,b,c,d,data)
   local results = {}
   if debug then printf("execute(): expr# = %d\n", #expr) end
   for i=1,#expr,1 do
     local e = expr[i]
-    local res = {}
-    local tname = 'a'
-    for s=1,#e,1 do
-      if tname == 'd' then
-        local val
-        if inmem then
-          val = tonumber(d[tonumber(e[s])])
-          res[s] = data[val]
-        else
-          val = tonumber(get_db('d', e[s]))
-          res[s] = get_db('data', val)
-        end
-        Count = Count + 2
-        break
-      end 
-      if inmem then
-        tname = get(a,b,c,d, tname, e[s])
-      else
-        tname = get_db(tname, e[s]) 
-      end
-      Count = Count + 1
-      res[s] = tname
+    if deep == false then
+      execExpr(i, e, results, a,b,c,d,data)
+    else
+      exprCount = #expr
+      fiber.create(function (i, e, results, a,b,c,d,data) 
+          execExpr(i, e,results,a,b,c,d,data)
+          exprCount = exprCount - 1 
+        end, i, e, results, a,b,c,d,data)
     end
-    results[i] = res
+  end
+  if deep == true then 
+    while exprCount > 0 do
+      fiber.sleep(1)    
+    end
   end
   if debug then printf("results# = %d\n", #results) end
   return results
@@ -381,7 +400,7 @@ local function main()
     end
   end
   print("executed in "..1000.0*(t-t0).." ms; total dereferences: "..Count)
-  print("executed in "..1000.0*(t-t0).." ms; single dereference time, ns: "..((t-t0)*1000000)/Count)
+  print("executed in "..1000.0*(t-t0).." ms; single dereference time: "..((t-t0)*1000000)/Count.." \181s = "..((t-t0)*1000000000)/Count.." ns")
   if inmem == false then 
     os.exit()
   end
