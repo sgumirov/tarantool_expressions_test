@@ -269,6 +269,8 @@ exprCount = 0
 local function execute(expr,a,b,c,d,data)
   local results = {}
   if debug then printf("execute(): expr# = %d\n", #expr) end
+  local fiber = nil
+  if wide == true then fiber = require('fiber') end
   for i=1,#expr,1 do
     local e = expr[i]
     if deep == false then
