@@ -14,6 +14,7 @@ math.randomseed(os.time())
 if (inmem == false) then
   print("NO TARANTOOL")
   wide = false
+  os.exit(-1)
 end
 
 if (deep == true) then --check for fibers
@@ -270,8 +271,8 @@ local function execute(expr,a,b,c,d,data)
   local results = {}
   if debug then printf("execute(): expr# = %d\n", #expr) end
   local fiber = nil
-  printf("wide=%s\n", tostring(wide))
-  if wide == true then fiber = require('fiber') end
+  printf("deep=%s\n", tostring(deep))
+  if deep == true then fiber = require('fiber') end
   for i=1,#expr,1 do
     local e = expr[i]
     if deep == false then
