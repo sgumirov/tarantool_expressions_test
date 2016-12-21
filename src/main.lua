@@ -290,7 +290,7 @@ local function execute(expr,a,b,c,d,data)
   if deep == true then 
     while exprCount > 0 do
       fiber.sleep(1)
-      print(exprCount)    
+      print("exprCnt="..exprCount)    
     end
   end
   if debug then printf("results# = %d\n", #results) end
