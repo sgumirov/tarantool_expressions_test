@@ -7,12 +7,13 @@ inmem=false
 sharding=true
 batch=true
 wide=true
-cache_enable=true
+deep=false
 
 math.randomseed(os.time())
 
 if (inmem == false) then
   print("NO TARANTOOL")
+  wide = false
 end
 
 if (sharding == true) then
@@ -21,8 +22,14 @@ if (sharding == true) then
 end
 
 if (wide==true) then
-  require('execwait')
-  print("FIBERS")
+  f = require('fiber')
+  if (f == nil) then 
+    wide = false
+    print("NO FIBERS (tarantool 1.6?) => disabling WIDE (now false)")
+  else 
+    require('execwait')
+    print("FIBERS")
+  end
 else
   print("NO FIBERS")
 end
@@ -176,24 +183,13 @@ local function execute_wide(expr, a,b,c,d,data)
   local layer_num = 1
   local lnum = #(expr[1])
   local params = {}
-  local total_collis = 0
   for n = 1,lnum,1 do --n = layer num
-    local collisions = {}
     for i = 1,#expr,1 do --i = expr num
       if results[i] == nil then results[i] = {'a'} end
       local k = expr[i][n]
       layer[i] = k
-      if cache_enable == true then
-        if collisions[k] == nil then collisions[k] = {} end
-        collisions[k] = table.insert(collisions[k], {i})  
-      end
       params[i] = {layer, results, i, n}
     end
---[[    if cache_enable == true then
-      for k,v in pairs(collisions) do
-        if v > 1 then total_collis = total_collis + v end
-      end
-    end]]--
     local f = function (param)
       local layer, results, expr_i, layer_n
       layer = param[1]
@@ -231,7 +227,6 @@ local function execute_wide(expr, a,b,c,d,data)
   end
   
   if debug then printf("results# = %d\n", #results) end
-  --if cache_enable == true then print("COLLISIONS# = "..total_collis) end
   return results
 end
 
@@ -243,11 +238,7 @@ local function execute(expr,a,b,c,d,data)
     local res = {}
     local tname = 'a'
     for s=1,#e,1 do
-     -- printf("e[%d]=%s\n", s, e[s])
       if tname == 'd' then
-  --      print("tname==d: e[s]="..e[s].." "..data[4])
-    --    printf("data[%s]=", s)
-        --print(data[tonumber(e[s])])
         local val
         if inmem then
           val = tonumber(d[tonumber(e[s])])
@@ -264,7 +255,6 @@ local function execute(expr,a,b,c,d,data)
       else
         tname = get_db(tname, e[s]) 
       end
-      --print("tname->"..tname)
       Count = Count + 1
       res[s] = tname
     end
