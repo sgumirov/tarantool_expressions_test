@@ -272,13 +272,15 @@ local function execute(expr,a,b,c,d,data)
   if debug then printf("execute(): expr# = %d\n", #expr) end
   local fiber = nil
   printf("deep=%s\n", tostring(deep))
-  if deep == true then fiber = require('fiber') end
+  if deep == true then 
+    fiber = require('fiber') 
+    exprCount = #expr
+  end
   for i=1,#expr,1 do
     local e = expr[i]
     if deep == false then
       execExpr(i, e, results, a,b,c,d,data)
     else
-      exprCount = #expr
       fiber.create(function (i, e, results, a,b,c,d,data) 
           execExpr(i, e,results,a,b,c,d,data)
           exprCount = exprCount - 1 
@@ -287,7 +289,8 @@ local function execute(expr,a,b,c,d,data)
   end
   if deep == true then 
     while exprCount > 0 do
-      fiber.sleep(1)    
+      fiber.sleep(1)
+      print(exprCount)    
     end
   end
   if debug then printf("results# = %d\n", #results) end
