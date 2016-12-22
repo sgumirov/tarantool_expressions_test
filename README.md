@@ -5,8 +5,8 @@ Shamil Gumirov <shamil@gumirov.com>
 # What this means
 The task is to evaluate data access expressions. Aim of this project is to benchmark 
 evaluation access speed for the following storage configurations:
-1. Lua tables
-..1. Sequentially
+1 Lua tables
+  1 Sequentially
 ..2. With Fibers (tarantool implementation of coroutines) to estimate fibers overhead
 ...1. With breadth traversal
 ...2. With depth traversal
