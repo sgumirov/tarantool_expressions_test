@@ -31,6 +31,15 @@ batch=false --use q_insert to fill tables
 wide=false --means execute expressions layer by layer (breadth traversal) 
 deep=false  --means run fiber for each expression simultaneously (depth traversal)
 ```
+Tarantool with sharding and fibers enabled, batch insertion and breadth traversal:
+```lua
+debug=false --debug means use small data and print verbosely. True sets REPEATS option to 1.
+inmem=false --false means use tarantool engine, true means use Lua tables
+sharding=true --use sharding
+batch=true --use q_insert to fill tables
+wide=true --means execute expressions layer by layer (breadth traversal) 
+deep=false  --means run fiber for each expression simultaneously (depth traversal)
+```
 
 # License
 (c) by Shamil Gumirov 2016. This code was writted under contract with private company without specifying licensing model, and without
