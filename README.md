@@ -1,23 +1,23 @@
 # Description
 Lua benchmark for evaluation large number of data access expressions under clean Lua 5.1 and Tarantool.
 # Author
-Shamil Gumirov <shamil@gumirov.com>
+Shamil Gumirov (shamil@gumirov.com)
 # What this means
 The task is to evaluate data access expressions. Aim of this project is to benchmark 
 evaluation access speed for the following storage configurations:
-1 Lua tables
-  1 Sequentially
-..2. With Fibers (tarantool implementation of coroutines) to estimate fibers overhead
-...1. With breadth traversal
-...2. With depth traversal
+ 1. Lua tables
+  1. Sequentially
+  2. With Fibers (tarantool implementation of coroutines) to estimate fibers overhead
+   1.  With breadth traversal
+   2. With depth traversal
 2. Tarantool:
-..1. As is
-..2. With sharding module activated (3 shards were implemented here, 1 master + 2 slaves, see run.sh script to add more)
-...1. With fibers to parallelize network access
-....1. With breadth traversal
-....2. With depth traversal
-...2. Shard without fibers
-..4. Use q_insert for batch inserting (on 2 slave shard instances this gives x6 increasing in speed of data fill procedure)
+  1. As is
+  2. With sharding module activated (3 shards were implemented here, 1 master + 2 slaves, see run.sh script to add more)
+   1. With fibers to parallelize network access
+    1. With breadth traversal
+    2. With depth traversal
+   2. Shard without fibers
+  4. Use q_insert for batch inserting (on 2 slave shard instances this gives x6 increasing in speed of data fill procedure)
 
 I did not compared coroutines with fibers although this could be interesting.
 
