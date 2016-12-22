@@ -9,14 +9,14 @@ evaluation access speed for the following storage configurations:
 1. Lua tables
  1. Sequentially
  2. With Fibers (tarantool implementation of coroutines) to estimate fibers overhead
-  1.  With breadth traversal
-  2. With depth traversal
+  * With breadth traversal
+  * With depth traversal
 2. Tarantool:
  1. As is
  2. With sharding module activated (3 shards were implemented here, 1 master + 2 slaves, see run.sh script to add more)
   1. With fibers to parallelize network access
-   1. With breadth traversal
-   2. With depth traversal
+   * With breadth traversal
+   * With depth traversal
   2. Shard without fibers
  3. Use q_insert for batch inserting (on 2 slave shard instances this gives x6 increasing in speed of data fill procedure)
 
