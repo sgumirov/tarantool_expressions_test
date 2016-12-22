@@ -22,6 +22,8 @@ evaluation access speed for the following storage configurations:
 I did not compared coroutines with fibers although this could be interesting.
 
 # Configuration examples
+These examples could be copied to beginning of src/main.lua.
+
 Original Lua (does not require tarantool to run):
 ```lua
 debug=false --debug means use small data and print verbosely. True sets REPEATS option to 1.
