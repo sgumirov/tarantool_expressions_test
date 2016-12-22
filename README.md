@@ -1,7 +1,7 @@
 # Description
-Lua benchmark for evaluation large number of data access expressions under clean Lua 5.1 and Tarantool.
+Lua benchmark for evaluation the large number of data access expressions under clean Lua 5.1 and Tarantool. This is a fully synthetic test.
 # Author
-Shamil Gumirov (shamil@gumirov.com)
+Shamil Gumirov
 # What is this all for
 The final task is to evaluate expressions on the data access language for storage in a business processes engine. Aim of this project is to benchmark access speed for the following storage configurations:
 
