@@ -1,15 +1,27 @@
-MAX = 1000
-DEPTH=4
-WIDTH=2600
-Count=0
-debug=false
-inmem=false
-sharding=true
-batch=true
-wide=false
-deep=true --means run fiber for each expression simultaneously
+-- Please see README.md for description
+-- CONFIG options --
+MAX = 1000 --number of values in tables
+DEPTH=4    --length of each expression
+WIDTH=2600 --number of expressions. 
+-- Note that number of dereferences is slightly more than DEPTH*WIDTH due to randomness of references in expressions.
+-- For example 4*2600 gives ~10000 dereferences. 
 
+debug=false --debug means use small data and print verbosely. True sets REPEATS option to 1.
+inmem=false --false means use tarantool engine, true means use Lua tables
+sharding=true --use sharding
+batch=true --use q_insert to fill tables
+wide=false --means execute expressions layer by layer (breadth traversal) 
+deep=true  --means run fiber for each expression simultaneously (depth traversal)
+REPEATS=10 --repeat dereferencing benchmark this time. Note that debug=true effectively sets this value to 1
+-- END CONFIG --
+
+Count=0
 math.randomseed(os.time())
+
+if deep == true and wide == true then
+  print("FATAL: config options \"deep\" and \"wide\" cannot be both true at the same time. Exiting.")
+  os.exit(-1)
+end
 
 if (deep == true) then --check for fibers
   if(require('fiber') == nil) then
@@ -371,7 +383,6 @@ local function main()
   end
 
   local res = {}
-  local REPEATS = 10
   if debug then REPEATS = 1 end
 
   print("processing test. please wait.")
